@@ -1,17 +1,17 @@
 package com.fernleaf.hostilities.client.model.geardian;
 
+import com.fernleaf.fernframe.proprio.animation.AnimationTransition;
+import com.fernleaf.fernframe.proprio.animation.TransitionAnimator;
+import com.fernleaf.fernframe.proprio.animation.TransitionEasing;
 import com.fernleaf.hostilities.Hostilities;
 import com.fernleaf.hostilities.client.animations.GeardianAnimations;
 import com.fernleaf.hostilities.server.entity.geardian.Geardian;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
 public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
@@ -35,6 +35,7 @@ public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
     public final ModelPart rightArm;
     public final ModelPart leftArm;
     public final ModelPart glaive;
+
 
     public GeardianModel(ModelPart root) {
         this.root = root;
@@ -61,14 +62,12 @@ public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
         PartDefinition partdefinition = meshdefinition.getRoot();
 
         PartDefinition body = partdefinition.addOrReplaceChild("body", CubeListBuilder.create(), PartPose.offset(-2.5F, 5.5F, -0.5F));
-
         PartDefinition lower_half = body.addOrReplaceChild("lower_half", CubeListBuilder.create(), PartPose.offset(0.0F, 3.5F, 0.0F));
 
         lower_half.addOrReplaceChild("bell_dress", CubeListBuilder.create().texOffs(13, 0).addBox(-5.5F, -2.0F, -3.5F, 11.0F, 16.0F, 8.0F, new CubeDeformation(0.0F))
                 .texOffs(46, 25).addBox(-6.5F, 13.0F, -4.5F, 13.0F, 2.0F, 10.0F, new CubeDeformation(0.0F)), PartPose.offset(2.0F, -1.0F, 0.0F));
 
         PartDefinition feet = lower_half.addOrReplaceChild("feet", CubeListBuilder.create(), PartPose.offset(2.0F, 6.0F, 0.0F));
-
         feet.addOrReplaceChild("left_leg", CubeListBuilder.create().texOffs(65, 78).addBox(-2.5F, -1.0F, -1.5F, 4.0F, 10.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(2.75F, 0.0F, 0.0F));
         feet.addOrReplaceChild("right_leg", CubeListBuilder.create().texOffs(17, 80).addBox(-1.5F, -1.0F, -1.5F, 4.0F, 10.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.75F, 0.0F, 0.0F));
 
@@ -79,26 +78,20 @@ public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
                 .texOffs(87, 0).addBox(-1.5F, 5.0F, -2.0F, 3.0F, 3.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -15.0F, 0.5F));
 
         head.addOrReplaceChild("cube_r1", CubeListBuilder.create().texOffs(17, 73).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.0F, 0.75F, -3.5F, -0.48F, 0.0F, 0.0F));
-
         head.addOrReplaceChild("right_eye", CubeListBuilder.create().texOffs(67, 54).addBox(-12.5F, -11.75F, -0.75F, 13.0F, 10.0F, 0.0F, new CubeDeformation(0.0F))
                 .texOffs(52, 18).addBox(-4.5F, -4.0F, -1.0F, 5.0F, 5.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offset(-1.0F, 0.0F, -3.5F));
-
         head.addOrReplaceChild("left_eye", CubeListBuilder.create().texOffs(63, 18).addBox(-13.75F, -2.25F, -4.25F, 5.0F, 5.0F, 0.0F, new CubeDeformation(0.0F))
                 .texOffs(67, 67).addBox(-13.5F, -10.0F, -4.0F, 13.0F, 10.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offset(14.25F, -1.75F, -0.25F));
-
         head.addOrReplaceChild("hair", CubeListBuilder.create().texOffs(46, 38).addBox(-5.5F, -4.5F, -7.5F, 11.0F, 3.0F, 10.0F, new CubeDeformation(0.0F))
                 .texOffs(13, 25).addBox(-5.5F, -1.5F, -2.5F, 11.0F, 24.0F, 5.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -2.5F, 2.5F));
 
         PartDefinition arms = top_half.addOrReplaceChild("arms", CubeListBuilder.create(), PartPose.offset(6.5F, 2.5F, 0.5F));
-
         arms.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(27, 56).addBox(-2.0F, -1.5F, -2.0F, 4.0F, 19.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(-13.0F, -8.0F, 0.0F));
 
         PartDefinition left_arm = arms.addOrReplaceChild("left_arm", CubeListBuilder.create(), PartPose.offset(0.0F, -8.0F, 0.0F));
-
         left_arm.addOrReplaceChild("group2", CubeListBuilder.create().texOffs(0, 73).addBox(-2.0F, -9.5F, 0.0F, 4.0F, 19.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 8.0F, -2.0F));
 
         PartDefinition group = left_arm.addOrReplaceChild("group", CubeListBuilder.create(), PartPose.offset(0.0F, 14.5F, 0.5F));
-
         PartDefinition glaive = group.addOrReplaceChild("glaive", CubeListBuilder.create(), PartPose.offsetAndRotation(0.0F, 0.0F, -9.0F, 1.5708F, 0.0F, 1.5708F));
 
         glaive.addOrReplaceChild("resize", CubeListBuilder.create().texOffs(0, 0).addBox(-10.0F, -22.0F, -1.5F, 3.0F, 52.0F, 3.0F, new CubeDeformation(0.0F))
@@ -114,6 +107,11 @@ public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
         return this.root;
     }
 
+    private final AnimationTransition sleepTransition = new AnimationTransition(10, TransitionEasing.SMOOTH);
+    private final AnimationTransition sweepTransition = new AnimationTransition(5, TransitionEasing.BEZIER);
+    private final AnimationTransition chargedSweepTransition = new AnimationTransition(5, TransitionEasing.BEZIER);
+    private final AnimationTransition slamTransition = new AnimationTransition(5, TransitionEasing.BEZIER);
+
     @Override
     public void setupAnim(Geardian entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
@@ -122,15 +120,13 @@ public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
         this.head.xRot = headPitch * ((float) Math.PI / 180F);
         this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
 
-        // Animate Keyframe Definitions
+        // Loopers
         this.animate(entity.walkAnimationState, GeardianAnimations.walk, ageInTicks);
-        this.animate(entity.sleepAnimationState, GeardianAnimations.sleep, ageInTicks);
 
-        // Light Attacks
-        this.animate(entity.sweepAnimationState, GeardianAnimations.sweep, ageInTicks);
-
-        // Heavy Attacks
-        this.animate(entity.chargedSweepAnimationState, GeardianAnimations.charged_sweep, ageInTicks);
-        this.animate(entity.slamAnimationState, GeardianAnimations.slam, ageInTicks);
+        // Action states evaluated with individual transition instances
+        TransitionAnimator.animateWithTransition(this, entity.sleepAnimationState, GeardianAnimations.sleep, ageInTicks, this.sleepTransition);
+        TransitionAnimator.animateWithTransition(this, entity.sweepAnimationState, GeardianAnimations.sweep, ageInTicks, this.sweepTransition);
+        TransitionAnimator.animateWithTransition(this, entity.chargedSweepAnimationState, GeardianAnimations.charged_sweep, ageInTicks, this.chargedSweepTransition);
+        TransitionAnimator.animateWithTransition(this, entity.slamAnimationState, GeardianAnimations.slam, ageInTicks, this.slamTransition);
     }
 }

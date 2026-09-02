@@ -10,6 +10,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
@@ -90,6 +91,15 @@ public class Geardian extends HostilitiesEntity {
         this.slamAnimationState.animateWhen(animId == ANIM_SLAM, this.tickCount);
     }
 
+    // --- Prevent Vanilla Contact Damage Mid-Action ---
+    @Override
+    public boolean doHurtTarget(@NotNull Entity target) {
+        if (this.isPerformingAction()) {
+            return false;
+        }
+        return super.doHurtTarget(target);
+    }
+
     // --- Brain AI Setup ---
     @Override
     @SuppressWarnings("unchecked")
@@ -131,12 +141,12 @@ public class Geardian extends HostilitiesEntity {
                 Activity.FIGHT,
                 ImmutableList.of(
                         Pair.of(0, StopAttackingIfTargetInvalid.create(Geardian::isTargetInvalid)),
-                        Pair.of(1, SetWalkTargetFromAttackTargetIfTargetOutOfReach.create(1.25F)),
-                        Pair.of(2, new RunOne<>(ImmutableList.of(
-                                Pair.of(new GeardianSweepBehavior(), 5),        // Light Sweep
-                                Pair.of(new GeardianSlamBehavior(), 2),         // Heavy Slam
-                                Pair.of(new GeardianChargedSweepBehavior(), 2)  // Heavy Charged Sweep
-                        )))
+                        Pair.of(1, new RunOne<>(ImmutableList.of(
+                                Pair.of(new GeardianSweepBehavior(), 4),
+                                Pair.of(new GeardianSlamBehavior(), 3),
+                                Pair.of(new GeardianChargedSweepBehavior(), 3)
+                        ))),
+                        Pair.of(2, SetWalkTargetFromAttackTargetIfTargetOutOfReach.create(1.25F))
                 ),
                 ImmutableSet.of(
                         Pair.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT)
@@ -153,7 +163,6 @@ public class Geardian extends HostilitiesEntity {
         super.customServerAiStep();
     }
 
-    // --- AI Helper Behaviors & Target Search ---
     private static boolean isTargetInvalid(LivingEntity target) {
         if (target instanceof Player player) {
             return player.isCreative() || player.isSpectator();
@@ -162,13 +171,11 @@ public class Geardian extends HostilitiesEntity {
     }
 
     private static Optional<? extends LivingEntity> findTarget(HostilitiesEntity geardian) {
-        // Priority 1: Defend itself if hit
         Optional<LivingEntity> hurtBy = geardian.getBrain().getMemory(MemoryModuleType.HURT_BY_ENTITY);
         if (hurtBy.isPresent() && hurtBy.get().isAlive()) {
             return hurtBy;
         }
 
-        // Priority 2: Attack hostile monsters nearby
         Optional<NearestVisibleLivingEntities> visibleEntities = geardian.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES);
         return visibleEntities.flatMap(nearestVisibleLivingEntities -> nearestVisibleLivingEntities.find(entity ->
                 entity instanceof Enemy && !geardian.isAlliedTo(entity)
@@ -208,12 +215,9 @@ public class Geardian extends HostilitiesEntity {
         }));
     }
 
-    // --- Phase Transition FX & Interrupts ---
     @Override
     protected void onPhaseTransition(int oldPhase, int newPhase) {
         super.onPhaseTransition(oldPhase, newPhase);
-
-        // Trigger visual/audio Phase Shift Roar (1.5s lock)
         triggerAnimation(ANIM_PHASE_ROAR, 30);
     }
 }

@@ -128,6 +128,7 @@ dependencies {
         }
     }
 
+
     compileOnly fileTree(dir: 'compile', include: ['*.jar'])
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
@@ -148,30 +149,6 @@ dependencies {
 
     compileOnly "curse.maven:no-mans-land-538493:8359457"
     localRuntime "curse.maven:no-mans-land-538493:8359457"
-
-    compileOnly "curse.maven:mod-primal-1351626:7909458"
-    localRuntime "curse.maven:mod-primal-1351626:7909458"
-
-    compileOnly "curse.maven:spawn-mod-935694:8507225"
-    localRuntime "curse.maven:spawn-mod-935694:8507225"
-
-    compileOnly "curse.maven:teallib-1597849:8507094"
-    localRuntime "curse.maven:teallib-1597849:8507094"
-
-    compileOnly "curse.maven:geckolib-388172:8350073"
-    localRuntime "curse.maven:geckolib-388172:8350073"
-
-    compileOnly "curse.maven:alexs-mobs-neo-1613387:8448639"
-    localRuntime "curse.maven:alexs-mobs-neo-1613387:8448639"
-
-    compileOnly "curse.maven:alexs-caves-neo-1613404:8448747"
-    localRuntime "curse.maven:alexs-caves-neo-1613404:8448747"
-
-    compileOnly "curse.maven:naturalist-627986:8663845"
-    localRuntime "curse.maven:naturalist-627986:8663845"
-
-    compileOnly "curse.maven:citadel-331936:8458935"
-    localRuntime "curse.maven:citadel-331936:8458935"
 
     compileOnly "curse.maven:malum-484064:7307339"
     localRuntime "curse.maven:malum-484064:7307339"

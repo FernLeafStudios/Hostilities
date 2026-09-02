@@ -1,74 +1,78 @@
 package com.fernleaf.hostilities.server.entity.geardian.ai;
 
+import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttack;
+import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttackBehavior;
+import com.fernleaf.fernframe.allyrally.entity.AllyRallyBossEntity;
 import com.fernleaf.hostilities.server.entity.geardian.Geardian;
 import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity;
-import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity.ActionState;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.phys.AABB;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Map;
 
-public class GeardianSweepBehavior extends Behavior<HostilitiesEntity> {
+public class GeardianSweepBehavior extends TelegraphedAttackBehavior<HostilitiesEntity> {
 
     public GeardianSweepBehavior() {
-        super(Map.of(
-                MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT,
-                MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT
-        ), 20); // 1 second duration
+        super(new Attack());
     }
 
-    @Override
-    protected boolean checkExtraStartConditions(@NotNull ServerLevel level, HostilitiesEntity owner) {
-        LivingEntity target = owner.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null);
-        return target != null
-                && target.isAlive()
-                && !owner.isSitting()
-                && owner.distanceToSqr(target) <= 20.0D; // Slightly expanded start range
-    }
+    private static class Attack implements TelegraphedAttack<HostilitiesEntity> {
+        @Override
+        public int getWindupTicks() { return 12; } // 0.6s windup
 
-    // CRITICAL: Keeps the animation playing even if the player steps directly inside the mob
-    @Override
-    protected boolean canStillUse(@NotNull ServerLevel level, @NotNull HostilitiesEntity entity, long gameTime) {
-        return entity.getActionTicks() > 0;
-    }
+        @Override
+        public int getActiveTicks() { return 7; }  // Active window 0.6s to 0.95s
 
-    @Override
-    protected void start(@NotNull ServerLevel level, HostilitiesEntity geardian, long gameTime) {
-        geardian.setActionState(ActionState.LIGHT_ATTACKS, 20);
-        geardian.triggerAnimation(Geardian.ANIM_SWEEP, 20);
-        geardian.getNavigation().stop();
-    }
+        @Override
+        public int getRecoveryTicks() { return 20; }
 
-    @Override
-    protected void tick(@NotNull ServerLevel level, HostilitiesEntity geardian, long gameTime) {
-        LivingEntity target = geardian.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null);
-        if (target != null) {
+        @Override
+        public boolean canAttack(HostilitiesEntity owner, LivingEntity target) {
+            return target != null && target.isAlive() && !owner.isSitting() && owner.distanceToSqr(target) <= 20.0D;
+        }
+
+        @Override
+        public void onWindupStart(HostilitiesEntity geardian, LivingEntity target) {
+            geardian.setActionState(AllyRallyBossEntity.ActionState.LIGHT_ATTACKS, getTotalDuration());
+            geardian.triggerAnimation(Geardian.ANIM_SWEEP, getTotalDuration());
+            lockPosition(geardian);
+        }
+
+        @Override
+        public void onWindupTick(HostilitiesEntity geardian, LivingEntity target, int elapsedTicks) {
+            lockPosition(geardian);
             geardian.getLookControl().setLookAt(target, 30.0F, 30.0F);
         }
 
-        // Impact frame at 75% (5 actionTicks remaining)
-        if (geardian.getActionTicks() == 5) {
-            // Sweeping bounding box ensures point-blank hits land 100% of the time
-            AABB sweepBox = geardian.getBoundingBox().inflate(2.0D, 1.0D, 2.0D);
-            List<LivingEntity> targets = geardian.level().getEntitiesOfClass(
-                    LivingEntity.class, sweepBox, e -> e != geardian && !geardian.isAlliedTo(e)
-            );
+        @Override
+        public void onExecute(HostilitiesEntity geardian, LivingEntity target, int activeTicksElapsed) {
+            lockPosition(geardian);
+            geardian.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-            for (LivingEntity entity : targets) {
-                entity.hurt(geardian.damageSources().mobAttack(geardian), 8.0F);
+            if (activeTicksElapsed == 1) {
+                AABB sweepBox = geardian.getBoundingBox().inflate(2.0D, 1.0D, 2.0D);
+                List<LivingEntity> targets = geardian.level().getEntitiesOfClass(
+                        LivingEntity.class, sweepBox, e -> e != geardian && !geardian.isAlliedTo(e)
+                );
+
+                for (LivingEntity entity : targets) {
+                    entity.hurt(geardian.damageSources().mobAttack(geardian), 8.0F);
+                }
+                geardian.incrementCombo();
             }
-            geardian.incrementCombo();
         }
-    }
 
-    @Override
-    protected void stop(@NotNull ServerLevel level, HostilitiesEntity geardian, long gameTime) {
-        geardian.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN, true, 15L);
+        @Override
+        public void onRecoveryTick(HostilitiesEntity geardian, LivingEntity target, int recoveryTicksElapsed) {}
+
+        @Override
+        public void onStop(HostilitiesEntity geardian, LivingEntity target) {}
+
+        private void lockPosition(HostilitiesEntity geardian) {
+            geardian.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
+            geardian.getNavigation().stop();
+            geardian.setDeltaMovement(0.0D, geardian.getDeltaMovement().y, 0.0D);
+        }
     }
 }
