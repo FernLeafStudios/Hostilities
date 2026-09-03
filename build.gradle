@@ -122,9 +122,19 @@ dependencies {
     implementation "io.github.llamalad7:mixinextras-neoforge:0.4.1"
 
     // 2. FernFrame Core Library
-    jarJar(implementation("com.fernleaf.fernframe:fernframe:1.0.0")) {
+    implementation "com.fernleaf.meanderingmobs:MeanderingMobs:1.0.0"
+    implementation "com.fernleaf.fernframe:fernframe:1.0.0"
+
+    // 2. JarInJar Bundling Directives
+    jarJar("com.fernleaf.meanderingmobs:MeanderingMobs:[1.0.0,)") {
         version {
-            prefer('1.0.0')
+            prefer '1.0.0'
+        }
+    }
+
+    jarJar("com.fernleaf.fernframe:fernframe:[1.0.0,)") {
+        version {
+            prefer '1.0.0'
         }
     }
 

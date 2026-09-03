@@ -1,8 +1,7 @@
 package com.fernleaf.hostilities.server.entity.geardian.ai;
 
-import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttack;
-import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttackBehavior;
-import com.fernleaf.fernframe.allyrally.entity.AllyRallyBossEntity;
+import com.fernleaf.fernframe.brawlcrawl.attack.TelegraphedAttack;
+import com.fernleaf.fernframe.brawlcrawl.attack.TelegraphedAttackBehavior;
 import com.fernleaf.hostilities.server.entity.geardian.Geardian;
 import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,10 +18,10 @@ public class GeardianSweepBehavior extends TelegraphedAttackBehavior<Hostilities
 
     private static class Attack implements TelegraphedAttack<HostilitiesEntity> {
         @Override
-        public int getWindupTicks() { return 12; } // 0.6s windup
+        public int getWindupTicks() { return 12; }
 
         @Override
-        public int getActiveTicks() { return 7; }  // Active window 0.6s to 0.95s
+        public int getActiveTicks() { return 7; }
 
         @Override
         public int getRecoveryTicks() { return 20; }
@@ -34,7 +33,6 @@ public class GeardianSweepBehavior extends TelegraphedAttackBehavior<Hostilities
 
         @Override
         public void onWindupStart(HostilitiesEntity geardian, LivingEntity target) {
-            geardian.setActionState(AllyRallyBossEntity.ActionState.LIGHT_ATTACKS, getTotalDuration());
             geardian.triggerAnimation(Geardian.ANIM_SWEEP, getTotalDuration());
             lockPosition(geardian);
         }
@@ -59,7 +57,6 @@ public class GeardianSweepBehavior extends TelegraphedAttackBehavior<Hostilities
                 for (LivingEntity entity : targets) {
                     entity.hurt(geardian.damageSources().mobAttack(geardian), 8.0F);
                 }
-                geardian.incrementCombo();
             }
         }
 

@@ -1,9 +1,7 @@
 package com.fernleaf.hostilities.server.entity.geardian.ai;
 
-
-import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttack;
-import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttackBehavior;
-import com.fernleaf.fernframe.allyrally.entity.AllyRallyBossEntity;
+import com.fernleaf.fernframe.brawlcrawl.attack.TelegraphedAttack;
+import com.fernleaf.fernframe.brawlcrawl.attack.TelegraphedAttackBehavior;
 import com.fernleaf.hostilities.server.entity.geardian.Geardian;
 import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,10 +18,10 @@ public class GeardianChargedSweepBehavior extends TelegraphedAttackBehavior<Host
 
     private static class Attack implements TelegraphedAttack<HostilitiesEntity> {
         @Override
-        public int getWindupTicks() { return 34; } // 1.7s windup
+        public int getWindupTicks() { return 34; }
 
         @Override
-        public int getActiveTicks() { return 3; }  // Active window 1.7s to 1.85s
+        public int getActiveTicks() { return 3; }
 
         @Override
         public int getRecoveryTicks() { return 45; }
@@ -32,12 +30,11 @@ public class GeardianChargedSweepBehavior extends TelegraphedAttackBehavior<Host
         public boolean canAttack(HostilitiesEntity owner, LivingEntity target) {
             if (target == null || !target.isAlive() || owner.isSitting()) return false;
             double distSqr = owner.distanceToSqr(target);
-            return owner.getComboCounter() >= 2 || (distSqr > 16.0D && distSqr <= 30.0D);
+            return distSqr > 16.0D && distSqr <= 30.0D;
         }
 
         @Override
         public void onWindupStart(HostilitiesEntity geardian, LivingEntity target) {
-            geardian.setActionState(AllyRallyBossEntity.ActionState.HEAVY_ATTACKS, getTotalDuration());
             geardian.triggerAnimation(Geardian.ANIM_CHARGED_SWEEP, getTotalDuration());
             lockPosition(geardian);
         }
@@ -65,7 +62,6 @@ public class GeardianChargedSweepBehavior extends TelegraphedAttackBehavior<Host
                             geardian.getLookAngle().x * 1.8D, 0.2D, geardian.getLookAngle().z * 1.8D
                     ));
                 }
-                geardian.resetCombo();
             }
         }
 

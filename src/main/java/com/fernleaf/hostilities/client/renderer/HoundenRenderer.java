@@ -6,6 +6,7 @@ import com.fernleaf.hostilities.server.entity.hounden.Hounden;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
 public class HoundenRenderer extends MobRenderer<Hounden, HoundenModel<Hounden>> {
 
@@ -14,7 +15,7 @@ public class HoundenRenderer extends MobRenderer<Hounden, HoundenModel<Hounden>>
     }
 
     @Override
-    public ResourceLocation getTextureLocation(Hounden entity) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull Hounden entity) {
         return ResourceLocation.fromNamespaceAndPath(Hostilities.MODID, "textures/entity/hounden/hounden.png");
     }
 }

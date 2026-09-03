@@ -1,6 +1,5 @@
 package com.fernleaf.hostilities.server.entity.hounden.ai;
 
-import com.fernleaf.fernframe.allyrally.entity.AllyRallyBossEntity;
 import com.fernleaf.fernframe.mathbath.entity.OrbitMath;
 import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity;
 import com.google.common.collect.ImmutableMap;
@@ -24,7 +23,7 @@ public class HoundenCircleBehavior extends Behavior<HostilitiesEntity> {
 
     @Override
     protected boolean checkExtraStartConditions(@NotNull ServerLevel level, HostilitiesEntity owner) {
-        if (owner.isSitting() || owner.getActionState() != AllyRallyBossEntity.ActionState.IDLE) {
+        if (owner.isSitting() || owner.isPerformingAction()) {
             return false;
         }
 

@@ -1,7 +1,6 @@
 package com.fernleaf.hostilities.client.model.hounden;
 
-import com.fernleaf.fernframe.proprio.animation.AnimationTransition;
-import com.fernleaf.fernframe.proprio.animation.TransitionAnimator;
+import com.fernleaf.fernframe.proprio.animation.TransitionAnimationSystem;
 import com.fernleaf.fernframe.proprio.animation.TransitionEasing;
 import com.fernleaf.hostilities.Hostilities;
 import com.fernleaf.hostilities.client.animations.HoundenAnimations;
@@ -13,6 +12,8 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class HoundenModel<T extends Hounden> extends HierarchicalModel<T> {
 
@@ -34,12 +35,6 @@ public class HoundenModel<T extends Hounden> extends HierarchicalModel<T> {
 	public final ModelPart rightLeg;
 	public final ModelPart leftLeg;
 	public final ModelPart skirt;
-
-	// Transition definitions matching GeardianModel pattern
-	private final AnimationTransition idleTransition = new AnimationTransition(5, TransitionEasing.SMOOTH);
-	private final AnimationTransition sitTransition = new AnimationTransition(8, TransitionEasing.SMOOTH);
-	private final AnimationTransition lungeTransition = new AnimationTransition(4, TransitionEasing.BEZIER);
-	private final AnimationTransition scareTransition = new AnimationTransition(6, TransitionEasing.BEZIER);
 
 	public HoundenModel(ModelPart root) {
 		this.root = root;
@@ -126,14 +121,16 @@ public class HoundenModel<T extends Hounden> extends HierarchicalModel<T> {
 		this.head.xRot = headPitch * ((float) Math.PI / 180F);
 		this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
 
-		// Locomotion loops
+		// Continuous locomotion loops
 		this.animate(entity.walkAnimationState, HoundenAnimations.walk, ageInTicks);
 		this.animate(entity.runAnimationState, HoundenAnimations.run, ageInTicks);
 
-		// Action states
-		TransitionAnimator.animateWithTransition(this, entity.idleAnimationState, HoundenAnimations.idle, ageInTicks, this.idleTransition);
-		TransitionAnimator.animateWithTransition(this, entity.sitAnimationState, HoundenAnimations.sit, ageInTicks, this.sitTransition);
-		TransitionAnimator.animateWithTransition(this, entity.lungeAnimationState, HoundenAnimations.lunge, ageInTicks, this.lungeTransition);
-		TransitionAnimator.animateWithTransition(this, entity.scareAnimationState, HoundenAnimations.scare, ageInTicks, this.scareTransition);
+		// Normalized state transitions using TransitionAnimationSystem
+		TransitionAnimationSystem.animateNormalized(this, List.of(
+				new TransitionAnimationSystem.Entry(entity.idleAnimationState, HoundenAnimations.idle, 5.0F, TransitionEasing.SMOOTH),
+				new TransitionAnimationSystem.Entry(entity.sitAnimationState, HoundenAnimations.sit, 8.0F, TransitionEasing.SMOOTH),
+				new TransitionAnimationSystem.Entry(entity.lungeAnimationState, HoundenAnimations.lunge, 4.0F, TransitionEasing.BEZIER),
+				new TransitionAnimationSystem.Entry(entity.scareAnimationState, HoundenAnimations.scare, 6.0F, TransitionEasing.BEZIER)
+		), ageInTicks);
 	}
 }

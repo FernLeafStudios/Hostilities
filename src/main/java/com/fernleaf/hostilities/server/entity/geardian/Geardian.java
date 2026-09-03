@@ -27,6 +27,8 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,13 +37,13 @@ import java.util.Optional;
 public class Geardian extends HostilitiesEntity {
 
     // Animation IDs for Client Sync
-    public static final int ANIM_IDLE = 0;
+    public static final int ANIM_NONE = 0;
     public static final int ANIM_SWEEP = 1;          // Light Attack
     public static final int ANIM_SLAM = 2;           // Heavy Attack
     public static final int ANIM_CHARGED_SWEEP = 3;  // Heavy Attack
-    public static final int ANIM_PHASE_ROAR = 4;
 
     // Client Animation States
+    public final AnimationState idleAnimationState = new AnimationState();
     public final AnimationState walkAnimationState = new AnimationState();
     public final AnimationState sleepAnimationState = new AnimationState();
     public final AnimationState sweepAnimationState = new AnimationState();        // Light Attack
@@ -62,33 +64,43 @@ public class Geardian extends HostilitiesEntity {
                 .add(Attributes.FOLLOW_RANGE, 24.0D);
     }
 
+    // --- Taming Item ---
+    @Override
+    public boolean isTameItem(ItemStack stack) {
+        return stack.is(Items.COPPER_INGOT);
+    }
+
     // --- Client Tick Updates ---
     @Override
     public void tick() {
         super.tick();
-
         if (this.level().isClientSide()) {
             setupAnimationStates();
         }
     }
 
     private void setupAnimationStates() {
-        if (this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-6D && !this.isSleeping()) {
-            this.walkAnimationState.startIfStopped(this.tickCount);
-        } else {
-            this.walkAnimationState.stop();
-        }
-
         if (this.isSleeping()) {
             this.sleepAnimationState.startIfStopped(this.tickCount);
+            this.idleAnimationState.stop();
+            this.walkAnimationState.stop();
         } else {
             this.sleepAnimationState.stop();
+
+            double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
+            if (speedSqr > 1.0E-6D) {
+                this.walkAnimationState.startIfStopped(this.tickCount);
+                this.idleAnimationState.stop();
+            } else {
+                this.idleAnimationState.startIfStopped(this.tickCount);
+                this.walkAnimationState.stop();
+            }
         }
 
         int animId = this.getAnimationId();
-        this.sweepAnimationState.animateWhen(animId == ANIM_SWEEP, this.tickCount);
-        this.chargedSweepAnimationState.animateWhen(animId == ANIM_CHARGED_SWEEP, this.tickCount);
-        this.slamAnimationState.animateWhen(animId == ANIM_SLAM, this.tickCount);
+        this.sweepAnimationState.animateWhen(animId == Geardian.ANIM_SWEEP, this.tickCount);
+        this.chargedSweepAnimationState.animateWhen(animId == Geardian.ANIM_CHARGED_SWEEP, this.tickCount);
+        this.slamAnimationState.animateWhen(animId == Geardian.ANIM_SLAM, this.tickCount);
     }
 
     // --- Prevent Vanilla Contact Damage Mid-Action ---
@@ -213,11 +225,5 @@ public class Geardian extends HostilitiesEntity {
             }
             return false;
         }));
-    }
-
-    @Override
-    protected void onPhaseTransition(int oldPhase, int newPhase) {
-        super.onPhaseTransition(oldPhase, newPhase);
-        triggerAnimation(ANIM_PHASE_ROAR, 30);
     }
 }

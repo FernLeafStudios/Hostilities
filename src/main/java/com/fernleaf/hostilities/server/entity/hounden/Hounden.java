@@ -22,6 +22,8 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +56,12 @@ public class Hounden extends HostilitiesEntity {
                 .add(Attributes.FOLLOW_RANGE, 20.0D);
     }
 
+    // --- Taming Item ---
+    @Override
+    public boolean isTameItem(ItemStack stack) {
+        return stack.is(Items.BONE); // Replace with your desired taming item
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -63,7 +71,7 @@ public class Hounden extends HostilitiesEntity {
     }
 
     private void setupAnimationStates() {
-        if (this.isInSittingPose()) {
+        if (this.isSitting()) {
             this.sitAnimationState.startIfStopped(this.tickCount);
             this.idleAnimationState.stop();
             this.walkAnimationState.stop();

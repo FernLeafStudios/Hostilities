@@ -1,7 +1,6 @@
 package com.fernleaf.hostilities.client.model.geardian;
 
-import com.fernleaf.fernframe.proprio.animation.AnimationTransition;
-import com.fernleaf.fernframe.proprio.animation.TransitionAnimator;
+import com.fernleaf.fernframe.proprio.animation.TransitionAnimationSystem;
 import com.fernleaf.fernframe.proprio.animation.TransitionEasing;
 import com.fernleaf.hostilities.Hostilities;
 import com.fernleaf.hostilities.client.animations.GeardianAnimations;
@@ -13,6 +12,8 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
 
@@ -35,7 +36,6 @@ public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
     public final ModelPart rightArm;
     public final ModelPart leftArm;
     public final ModelPart glaive;
-
 
     public GeardianModel(ModelPart root) {
         this.root = root;
@@ -107,26 +107,19 @@ public class GeardianModel<T extends Geardian> extends HierarchicalModel<T> {
         return this.root;
     }
 
-    private final AnimationTransition sleepTransition = new AnimationTransition(10, TransitionEasing.SMOOTH);
-    private final AnimationTransition sweepTransition = new AnimationTransition(5, TransitionEasing.BEZIER);
-    private final AnimationTransition chargedSweepTransition = new AnimationTransition(5, TransitionEasing.BEZIER);
-    private final AnimationTransition slamTransition = new AnimationTransition(5, TransitionEasing.BEZIER);
-
     @Override
     public void setupAnim(Geardian entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        // MUST reset pose every frame before applying keyframe transformations
         this.root().getAllParts().forEach(ModelPart::resetPose);
 
-        // Head tracking
-        this.head.xRot = headPitch * ((float) Math.PI / 180F);
-        this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
+        // 1. Walking & Idle
+        this.animateWalk(GeardianAnimations.walk, limbSwing, limbSwingAmount, 2.0F, 2.5F);
+        this.animate(entity.idleAnimationState, GeardianAnimations.idle, ageInTicks);
+        this.animate(entity.sleepAnimationState, GeardianAnimations.sleep, ageInTicks);
 
-        // Loopers
-        this.animate(entity.walkAnimationState, GeardianAnimations.walk, ageInTicks);
-
-        // Action states evaluated with individual transition instances
-        TransitionAnimator.animateWithTransition(this, entity.sleepAnimationState, GeardianAnimations.sleep, ageInTicks, this.sleepTransition);
-        TransitionAnimator.animateWithTransition(this, entity.sweepAnimationState, GeardianAnimations.sweep, ageInTicks, this.sweepTransition);
-        TransitionAnimator.animateWithTransition(this, entity.chargedSweepAnimationState, GeardianAnimations.charged_sweep, ageInTicks, this.chargedSweepTransition);
-        TransitionAnimator.animateWithTransition(this, entity.slamAnimationState, GeardianAnimations.slam, ageInTicks, this.slamTransition);
+        // 2. Attacks (Evaluated AFTER idle so attack keyframes override idle rotations)
+        this.animate(entity.sweepAnimationState, GeardianAnimations.sweep, ageInTicks);
+        this.animate(entity.slamAnimationState, GeardianAnimations.slam, ageInTicks);
+        this.animate(entity.chargedSweepAnimationState, GeardianAnimations.charged_sweep, ageInTicks);
     }
 }

@@ -1,8 +1,7 @@
 package com.fernleaf.hostilities.server.entity.hounden.ai;
 
-import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttack;
-import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttackBehavior;
-import com.fernleaf.fernframe.allyrally.entity.AllyRallyBossEntity;
+import com.fernleaf.fernframe.brawlcrawl.attack.TelegraphedAttack;
+import com.fernleaf.fernframe.brawlcrawl.attack.TelegraphedAttackBehavior;
 import com.fernleaf.hostilities.server.entity.hounden.Hounden;
 import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity;
 import net.minecraft.world.entity.LivingEntity;
@@ -32,7 +31,6 @@ public class HoundenLungeBehavior extends TelegraphedAttackBehavior<HostilitiesE
 
         @Override
         public void onWindupStart(HostilitiesEntity hounden, LivingEntity target) {
-            hounden.setActionState(AllyRallyBossEntity.ActionState.LIGHT_ATTACKS, getTotalDuration());
             hounden.triggerAnimation(Hounden.ANIM_LUNGE, getTotalDuration());
             lockPosition(hounden);
         }

@@ -1,9 +1,7 @@
 package com.fernleaf.hostilities.server.entity.geardian.ai;
 
-
-import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttack;
-import com.fernleaf.fernframe.allyrally.attack.TelegraphedAttackBehavior;
-import com.fernleaf.fernframe.allyrally.entity.AllyRallyBossEntity;
+import com.fernleaf.fernframe.brawlcrawl.attack.TelegraphedAttack;
+import com.fernleaf.fernframe.brawlcrawl.attack.TelegraphedAttackBehavior;
 import com.fernleaf.hostilities.server.entity.geardian.Geardian;
 import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,10 +18,10 @@ public class GeardianSlamBehavior extends TelegraphedAttackBehavior<HostilitiesE
 
     private static class Attack implements TelegraphedAttack<HostilitiesEntity> {
         @Override
-        public int getWindupTicks() { return 30; } // 1.5s windup
+        public int getWindupTicks() { return 30; }
 
         @Override
-        public int getActiveTicks() { return 5; }  // Active window 1.5s to 1.75s
+        public int getActiveTicks() { return 5; }
 
         @Override
         public int getRecoveryTicks() { return 40; }
@@ -35,7 +33,6 @@ public class GeardianSlamBehavior extends TelegraphedAttackBehavior<HostilitiesE
 
         @Override
         public void onWindupStart(HostilitiesEntity geardian, LivingEntity target) {
-            geardian.setActionState(AllyRallyBossEntity.ActionState.HEAVY_ATTACKS, getTotalDuration());
             geardian.triggerAnimation(Geardian.ANIM_SLAM, getTotalDuration());
             lockPosition(geardian);
         }
@@ -51,7 +48,6 @@ public class GeardianSlamBehavior extends TelegraphedAttackBehavior<HostilitiesE
             lockPosition(geardian);
             geardian.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-            // Trigger hit detection on the first active tick frame
             if (activeTicksElapsed == 1) {
                 AABB slamBox = geardian.getBoundingBox().inflate(2.5D, 1.0D, 2.5D);
                 List<LivingEntity> targets = geardian.level().getEntitiesOfClass(
@@ -61,7 +57,6 @@ public class GeardianSlamBehavior extends TelegraphedAttackBehavior<HostilitiesE
                     entity.hurt(geardian.damageSources().mobAttack(geardian), 14.0F);
                     entity.setDeltaMovement(entity.getDeltaMovement().add(0.0D, 0.4D, 0.0D));
                 }
-                geardian.resetCombo();
             }
         }
 
