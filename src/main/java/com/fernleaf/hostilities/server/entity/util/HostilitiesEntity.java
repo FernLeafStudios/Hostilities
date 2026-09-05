@@ -180,6 +180,13 @@ public abstract class HostilitiesEntity extends TamableAnimal implements Ownable
         return getAnimationId() != 0;
     }
 
+    public void setPerformingAction(boolean performingAction) {
+        if (!performingAction) {
+            this.setAnimationId(0);
+            this.animationCountdown = 0;
+        }
+    }
+
     public void triggerAnimation(int id, int durationTicks) {
         this.setAnimationId(id);
         this.animationCountdown = durationTicks;

@@ -12,16 +12,16 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-public class HoundenLungeBehavior extends TelegraphedAttackBehavior<HostilitiesEntity> {
+public class HoundenScratchBehavior extends TelegraphedAttackBehavior<HostilitiesEntity> {
 
-    public HoundenLungeBehavior() {
+    public HoundenScratchBehavior() {
         super(new Attack());
     }
 
     private static class Attack implements TelegraphedAttack<HostilitiesEntity> {
-        @Override public int getWindupTicks() { return 25; }    // 0.0s - 1.25s (Scare pose window)
-        @Override public int getActiveTicks() { return 20; }    // 1.25s - 2.25s (Leap & Damage window)
-        @Override public int getRecoveryTicks() { return 5; }   // 2.25s - 2.50s (Landing recovery)
+        @Override public int getWindupTicks() { return 6; }
+        @Override public int getActiveTicks() { return 8; }
+        @Override public int getRecoveryTicks() { return 4; }
 
         @Override
         public boolean canAttack(HostilitiesEntity owner, LivingEntity target) {
@@ -29,22 +29,19 @@ public class HoundenLungeBehavior extends TelegraphedAttackBehavior<HostilitiesE
                     && target.isAlive()
                     && !owner.isSitting()
                     && !owner.isPerformingAction()
-                    && owner.distanceToSqr(target) >= 4.0D
-                    && owner.distanceToSqr(target) <= 64.0D;
+                    && owner.distanceToSqr(target) <= 9.0D;
         }
 
         @Override
         public void onWindupStart(HostilitiesEntity hounden, LivingEntity target) {
-            // Trigger single 50-tick (2.5s) baked animation sequence
-            int totalDuration = getWindupTicks() + getActiveTicks() + getRecoveryTicks();
-            hounden.triggerAnimation(Hounden.ANIM_LUNGE, totalDuration);
+            hounden.triggerAnimation(Hounden.ANIM_SCRATCH, getTotalDuration());
             alignFacing(hounden, target);
             lockRotation(hounden);
         }
 
         @Override
         public void onWindupTick(HostilitiesEntity hounden, LivingEntity target, int elapsedTicks) {
-            if (elapsedTicks <= 5) {
+            if (elapsedTicks <= 2) {
                 alignFacing(hounden, target);
             }
             lockRotation(hounden);
@@ -54,43 +51,41 @@ public class HoundenLungeBehavior extends TelegraphedAttackBehavior<HostilitiesE
         public void onExecute(HostilitiesEntity hounden, LivingEntity target, int activeTicksElapsed) {
             lockRotation(hounden);
 
-            // Launch committed leap vector at 1.5s mark (active tick 5)
-            if (activeTicksElapsed == 5) {
+            // Explosive burst forward
+            if (activeTicksElapsed == 1) {
                 Vec3 look = hounden.getLookAngle();
-                hounden.setDeltaMovement(new Vec3(look.x * 1.6D, 0.45D, look.z * 1.6D));
+                hounden.setDeltaMovement(look.x * 1.2D, 0.15D, look.z * 1.2D);
                 hounden.hasImpulse = true;
             }
 
-            // Lunge active damage window: 2.0s - 2.25s (active ticks 15 to 20)
-            if (activeTicksElapsed >= 10 && activeTicksElapsed <= 15) {
+            // Rapid double-scratch hits at tick 2 and tick 5
+            if (activeTicksElapsed == 2 || activeTicksElapsed == 5) {
                 Vec3 look = hounden.getLookAngle();
                 Vec3 center = hounden.position().add(look.scale(1.0D));
 
-                AABB hitBox = new AABB(
+                AABB scratchBox = new AABB(
                         center.x - 0.75D, hounden.getY(), center.z - 0.75D,
                         center.x + 0.75D, hounden.getY() + 1.8D, center.z + 0.75D
                 );
 
                 List<LivingEntity> targets = hounden.level().getEntitiesOfClass(
-                        LivingEntity.class, hitBox, e -> e != hounden && !hounden.isAlliedTo(e)
+                        LivingEntity.class, scratchBox, e -> e != hounden && !hounden.isAlliedTo(e)
                 );
 
                 for (LivingEntity entity : targets) {
-                    if (entity.hurt(hounden.damageSources().mobAttack(hounden), 8.0F)) {
-                        entity.setDeltaMovement(entity.getDeltaMovement().add(look.x * 0.8D, 0.25D, look.z * 0.8D));
-                    }
+                    entity.hurt(hounden.damageSources().mobAttack(hounden), 4.0F);
                 }
             }
         }
 
         @Override
-        public void onRecoveryTick(HostilitiesEntity hounden, LivingEntity target, int recoveryTicksElapsed) {
+        public void onRecoveryTick(HostilitiesEntity hounden, LivingEntity target, int elapsed) {
             lockRotation(hounden);
         }
 
         @Override
         public void onStop(HostilitiesEntity hounden, LivingEntity target) {
-            hounden.triggerAnimation(Hounden.ANIM_NONE, 0);
+            hounden.setAnimationId(Hounden.ANIM_NONE);
         }
 
         private void alignFacing(HostilitiesEntity hounden, LivingEntity target) {

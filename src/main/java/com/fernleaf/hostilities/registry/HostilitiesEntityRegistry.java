@@ -1,10 +1,13 @@
 package com.fernleaf.hostilities.registry;
 
 import com.fernleaf.hostilities.Hostilities;
+import com.fernleaf.hostilities.client.model.daturena.DaturenaModel;
 import com.fernleaf.hostilities.client.model.geardian.GeardianModel;
 import com.fernleaf.hostilities.client.model.hounden.HoundenModel;
+import com.fernleaf.hostilities.client.renderer.DaturenaRenderer;
 import com.fernleaf.hostilities.client.renderer.GeardianRenderer;
 import com.fernleaf.hostilities.client.renderer.HoundenRenderer;
+import com.fernleaf.hostilities.server.entity.daturena.Daturena;
 import com.fernleaf.hostilities.server.entity.geardian.Geardian;
 import com.fernleaf.hostilities.server.entity.hounden.Hounden;
 import net.minecraft.core.registries.Registries;
@@ -24,7 +27,7 @@ public class HostilitiesEntityRegistry {
 
     public static final DeferredHolder<EntityType<?>, EntityType<Geardian>> GUARDIAN = ENTITIES.register("geardian",
             () -> EntityType.Builder.of(Geardian::new, MobCategory.MONSTER)
-                    .sized(1.4F, 2.7F)
+                    .sized(1.4F, 3.0F)
                     .clientTrackingRange(16)
                     .build("geardian")
     );
@@ -34,6 +37,13 @@ public class HostilitiesEntityRegistry {
                     .sized(0.9F, 1.2F)
                     .clientTrackingRange(16)
                     .build("hounden")
+    );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<Daturena>> DATURENA = ENTITIES.register("daturena",
+            () -> EntityType.Builder.of(Daturena::new, MobCategory.MONSTER)
+                    .sized(1.8F, 3.0F)
+                    .clientTrackingRange(24)
+                    .build("daturena")
     );
 
     public static void register(IEventBus eventBus) {
@@ -46,6 +56,7 @@ public class HostilitiesEntityRegistry {
         public static void registerAttributes(EntityAttributeCreationEvent event) {
             event.put(GUARDIAN.get(), Geardian.createAttributes().build());
             event.put(HOUNDEN.get(), Hounden.createAttributes().build());
+            event.put(DATURENA.get(), Daturena.createAttributes().build());
         }
     }
 
@@ -55,12 +66,14 @@ public class HostilitiesEntityRegistry {
         public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
             event.registerEntityRenderer(GUARDIAN.get(), GeardianRenderer::new);
             event.registerEntityRenderer(HOUNDEN.get(), HoundenRenderer::new);
+            event.registerEntityRenderer(DATURENA.get(), DaturenaRenderer::new);
         }
 
         @SubscribeEvent
         public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
             event.registerLayerDefinition(GeardianModel.LAYER_LOCATION, GeardianModel::createBodyLayer);
             event.registerLayerDefinition(HoundenModel.LAYER_LOCATION, HoundenModel::createBodyLayer);
+            event.registerLayerDefinition(DaturenaModel.LAYER_LOCATION, DaturenaModel::createBodyLayer);
         }
     }
 }

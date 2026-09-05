@@ -11,30 +11,30 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-public class GeardianSlamBehavior extends TelegraphedAttackBehavior<HostilitiesEntity> {
+public class GeardianThrustBehavior extends TelegraphedAttackBehavior<HostilitiesEntity> {
 
-    public GeardianSlamBehavior() {
+    public GeardianThrustBehavior() {
         super(new Attack());
     }
 
     private static class Attack implements TelegraphedAttack<HostilitiesEntity> {
         @Override
-        public int getWindupTicks() { return 20; }   // 1.00s
+        public int getWindupTicks() { return 15; }   // 0.75s
 
         @Override
-        public int getActiveTicks() { return 10; }   // 0.50s (1.00s - 1.50s)
+        public int getActiveTicks() { return 5; }    // 0.25s (0.75s - 1.00s)
 
         @Override
-        public int getRecoveryTicks() { return 30; } // 1.50s (Total: 3.0s / 60 ticks)
+        public int getRecoveryTicks() { return 10; } // 0.50s (Total: 1.5s / 30 ticks)
 
         @Override
         public boolean canAttack(HostilitiesEntity owner, LivingEntity target) {
-            return target != null && target.isAlive() && !owner.isSitting() && owner.distanceToSqr(target) <= 36.0D;
+            return target != null && target.isAlive() && !owner.isSitting() && owner.distanceToSqr(target) <= 16.0D;
         }
 
         @Override
         public void onWindupStart(HostilitiesEntity geardian, LivingEntity target) {
-            geardian.triggerAnimation(Geardian.ANIM_SLAM, getTotalDuration());
+            geardian.triggerAnimation(Geardian.ANIM_JAB, getTotalDuration());
             lockPositionAndRotation(geardian);
         }
 
@@ -49,20 +49,22 @@ public class GeardianSlamBehavior extends TelegraphedAttackBehavior<HostilitiesE
 
             if (activeTicksElapsed == 1) {
                 Vec3 look = geardian.getLookAngle();
-                Vec3 startPos = geardian.position();
+                Vec3 startPos = geardian.position().add(0, 0.5D, 0);
 
-                AABB slamBox = new AABB(
-                        startPos.x - 0.75D, geardian.getY(), startPos.z - 0.75D,
-                        startPos.x + 0.75D, geardian.getY() + 2.0D, startPos.z + 0.75D
+                AABB thrustBox = new AABB(
+                        startPos.x - 0.5D, geardian.getY(), startPos.z - 0.5D,
+                        startPos.x + 0.5D, geardian.getY() + 2.0D, startPos.z + 0.5D
                 ).expandTowards(look.x * 4.0D, 0.0D, look.z * 4.0D);
 
                 List<LivingEntity> targets = geardian.level().getEntitiesOfClass(
-                        LivingEntity.class, slamBox, e -> e != geardian && !geardian.isAlliedTo(e)
+                        LivingEntity.class, thrustBox, e -> e != geardian && !geardian.isAlliedTo(e)
                 );
 
                 for (LivingEntity entity : targets) {
-                    entity.hurt(geardian.damageSources().mobAttack(geardian), 14.0F);
-                    entity.setDeltaMovement(entity.getDeltaMovement().add(0.0D, 0.4D, 0.0D));
+                    entity.hurt(geardian.damageSources().mobAttack(geardian), 10.0F);
+                    entity.setDeltaMovement(entity.getDeltaMovement().add(
+                            look.x * 0.8D, 0.1D, look.z * 0.8D
+                    ));
                 }
             }
         }

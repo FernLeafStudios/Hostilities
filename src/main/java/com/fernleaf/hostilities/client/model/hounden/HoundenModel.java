@@ -1,7 +1,5 @@
 package com.fernleaf.hostilities.client.model.hounden;
 
-import com.fernleaf.fernframe.proprio.animation.TransitionAnimationSystem;
-import com.fernleaf.fernframe.proprio.animation.TransitionEasing;
 import com.fernleaf.hostilities.Hostilities;
 import com.fernleaf.hostilities.client.animations.HoundenAnimations;
 import com.fernleaf.hostilities.server.entity.hounden.Hounden;
@@ -12,8 +10,6 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 public class HoundenModel<T extends Hounden> extends HierarchicalModel<T> {
 
@@ -58,18 +54,13 @@ public class HoundenModel<T extends Hounden> extends HierarchicalModel<T> {
 		MeshDefinition meshdefinition = new MeshDefinition();
 		PartDefinition partdefinition = meshdefinition.getRoot();
 
-		// Keep 'bone' at the base root (0, 0, 0)
 		PartDefinition bone = partdefinition.addOrReplaceChild("bone", CubeListBuilder.create(), PartPose.offset(0.0F, 0.0F, 0.0F));
-
-		// Transferred the offset (1.0F, 14.0F, 0.0F) to 'hounden' so position keyframes transform correctly relative to 'bone'
 		PartDefinition hounden = bone.addOrReplaceChild("hounden", CubeListBuilder.create(), PartPose.offset(1.0F, 14.0F, 0.0F));
 
 		PartDefinition torso = hounden.addOrReplaceChild("torso", CubeListBuilder.create().texOffs(25, 20).addBox(-3.0F, -1.0F, -1.0F, 4.0F, 9.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -7.0F, 0.0F));
-
 		PartDefinition arms = torso.addOrReplaceChild("arms", CubeListBuilder.create(), PartPose.offset(-4.0F, -1.0F, 0.0F));
 
 		arms.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(9, 29).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 11.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
-
 		arms.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(0, 29).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 11.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(6.0F, 0.0F, 0.0F));
 
 		PartDefinition head = hounden.addOrReplaceChild("head", CubeListBuilder.create().texOffs(25, 0).addBox(-3.0F, -7.0F, -1.0F, 6.0F, 6.0F, 4.0F, new CubeDeformation(0.0F))
@@ -100,9 +91,7 @@ public class HoundenModel<T extends Hounden> extends HierarchicalModel<T> {
 		PartDefinition legs = hounden.addOrReplaceChild("legs", CubeListBuilder.create(), PartPose.offset(-1.0F, 1.0F, 0.0F));
 
 		legs.addOrReplaceChild("right_leg", CubeListBuilder.create().texOffs(24, 46).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 9.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-1.0F, 0.0F, 0.0F));
-
 		legs.addOrReplaceChild("left_leg", CubeListBuilder.create().texOffs(15, 46).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 9.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(1.0F, 0.0F, 0.0F));
-
 		legs.addOrReplaceChild("skirt", CubeListBuilder.create().texOffs(0, 22).addBox(-6.0F, -1.0F, -1.0F, 10.0F, 4.0F, 2.0F, new CubeDeformation(0.1F)), PartPose.offset(1.0F, 1.0F, 0.0F));
 
 		return LayerDefinition.create(meshdefinition, 64, 64);
@@ -115,22 +104,29 @@ public class HoundenModel<T extends Hounden> extends HierarchicalModel<T> {
 
 	@Override
 	public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+		// MUST reset pose every frame before applying keyframe transformations
 		this.root().getAllParts().forEach(ModelPart::resetPose);
 
 		// Head tracking
 		this.head.xRot = headPitch * ((float) Math.PI / 180F);
 		this.head.yRot = netHeadYaw * ((float) Math.PI / 180F);
 
-		// Continuous locomotion loops
-		this.animate(entity.walkAnimationState, HoundenAnimations.walk, ageInTicks);
-		this.animate(entity.runAnimationState, HoundenAnimations.run, ageInTicks);
+		// 1. Base Locomotion / Idle (Mutually exclusive to avoid keyframe blending bugs)
+		if (entity.sitAnimationState.isStarted()) {
+			this.animate(entity.sitAnimationState, HoundenAnimations.sit, ageInTicks);
+		} else if (entity.runAnimationState.isStarted()) {
+			this.animate(entity.runAnimationState, HoundenAnimations.run, ageInTicks);
+		} else if (entity.walkAnimationState.isStarted()) {
+			this.animate(entity.walkAnimationState, HoundenAnimations.walk, ageInTicks);
+		} else {
+			this.animate(entity.idleAnimationState, HoundenAnimations.idle, ageInTicks);
+		}
 
-		// Normalized state transitions using TransitionAnimationSystem
-		TransitionAnimationSystem.animateNormalized(this, List.of(
-				new TransitionAnimationSystem.Entry(entity.idleAnimationState, HoundenAnimations.idle, 5.0F, TransitionEasing.SMOOTH),
-				new TransitionAnimationSystem.Entry(entity.sitAnimationState, HoundenAnimations.sit, 8.0F, TransitionEasing.SMOOTH),
-				new TransitionAnimationSystem.Entry(entity.lungeAnimationState, HoundenAnimations.lunge, 4.0F, TransitionEasing.BEZIER),
-				new TransitionAnimationSystem.Entry(entity.scareAnimationState, HoundenAnimations.scare, 6.0F, TransitionEasing.BEZIER)
-		), ageInTicks);
+		// 2. Action & Attack states (Applied on top of base pose)
+		this.animate(entity.lungeAnimationState, HoundenAnimations.lunge, ageInTicks);
+		this.animate(entity.scareAnimationState, HoundenAnimations.scare, ageInTicks);
+		this.animate(entity.scratchAnimationState, HoundenAnimations.scratch, ageInTicks);
+		this.animate(entity.biteAnimationState, HoundenAnimations.bite, ageInTicks);
+		this.animate(entity.retreatAnimationState, HoundenAnimations.retreat, ageInTicks); // Added
 	}
 }

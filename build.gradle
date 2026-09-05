@@ -169,6 +169,18 @@ dependencies {
     compileOnly "curse.maven:curios-309927:6529130"
     localRuntime "curse.maven:curios-309927:6529130"
 
+    compileOnly "curse.maven:shield-expansion-583318:8054624"
+    localRuntime "curse.maven:shield-expansion-583318:8054624"
+
+    compileOnly "curse.maven:combat-roll-678036:7348018"
+    localRuntime "curse.maven:combat-roll-678036:7348018"
+
+    compileOnly "curse.maven:playeranimator-658587:7389814"
+    localRuntime "curse.maven:playeranimator-658587:7389814"
+
+    compileOnly "curse.maven:cloth-config-348521:5729127"
+    localRuntime "curse.maven:cloth-config-348521:5729127"
+
     localRuntime "maven.modrinth:sodium:mc1.21.1-0.8.13-beta.2-neoforge"
 }
 

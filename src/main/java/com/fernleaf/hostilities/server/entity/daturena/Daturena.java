@@ -1,6 +1,6 @@
-package com.fernleaf.hostilities.server.entity.geardian;
+package com.fernleaf.hostilities.server.entity.daturena;
 
-import com.fernleaf.hostilities.server.entity.geardian.ai.*;
+import com.fernleaf.hostilities.server.entity.daturena.ai.*;
 import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -32,31 +32,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public class Geardian extends HostilitiesEntity {
+public class Daturena extends HostilitiesEntity {
 
     // Animation IDs for Client Sync
     public static final int ANIM_NONE = 0;
-    public static final int ANIM_SWEEP = 1;
-    public static final int ANIM_JAB = 2;
-    public static final int ANIM_SLAM = 3;
-    public static final int ANIM_CHARGED_SWEEP = 4;
-    public static final int ANIM_HEAVY_THRUST = 5;
-    public static final int ANIM_LEFT_STEP = 6;   // Changed from String to ID
-    public static final int ANIM_RIGHT_STEP = 7;  // Changed from String to ID
+    public static final int ANIM_BASH = 1;
+    public static final int ANIM_THREE_PUNCH_COMBO = 2;
+    public static final int ANIM_JAB_CROSS = 3;
 
     // Client Animation States
     public final AnimationState idleAnimationState = new AnimationState();
     public final AnimationState walkAnimationState = new AnimationState();
-    public final AnimationState sleepAnimationState = new AnimationState();
-    public final AnimationState sweepAnimationState = new AnimationState();
-    public final AnimationState thrustAnimationState = new AnimationState();
-    public final AnimationState chargedSweepAnimationState = new AnimationState();
-    public final AnimationState slamAnimationState = new AnimationState();
-    public final AnimationState heavythrustAnimationState = new AnimationState();
-    public final AnimationState leftstepAnimationState = new AnimationState();
-    public final AnimationState rightstepAnimationState = new AnimationState();
+    public final AnimationState bashAnimationState = new AnimationState();
+    public final AnimationState threePunchComboAnimationState = new AnimationState();
+    public final AnimationState jabCrossAnimationState = new AnimationState();
 
-    public Geardian(EntityType<? extends TamableAnimal> entityType, Level level) {
+    public Daturena(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
     }
 
@@ -64,16 +55,16 @@ public class Geardian extends HostilitiesEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 200.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.25D)
-                .add(Attributes.ATTACK_DAMAGE, 8.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.6D)
-                .add(Attributes.FOLLOW_RANGE, 24.0D);
+                .add(Attributes.MOVEMENT_SPEED, 0.22D)
+                .add(Attributes.ATTACK_DAMAGE, 12.0D)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.9D)
+                .add(Attributes.FOLLOW_RANGE, 32.0D);
     }
 
     // --- Taming Item ---
     @Override
     public boolean isTameItem(ItemStack stack) {
-        return stack.is(Items.COPPER_INGOT);
+        return stack.is(Items.PRISMARINE_SHARD);
     }
 
     // --- Client Tick Updates ---
@@ -86,13 +77,12 @@ public class Geardian extends HostilitiesEntity {
     }
 
     private void setupAnimationStates() {
-        if (this.isSleeping()) {
-            this.sleepAnimationState.startIfStopped(this.tickCount);
+        int animId = this.getAnimationId();
+
+        if (this.isPerformingAction()) {
             this.idleAnimationState.stop();
             this.walkAnimationState.stop();
         } else {
-            this.sleepAnimationState.stop();
-
             double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
             if (speedSqr > 1.0E-6D) {
                 this.walkAnimationState.startIfStopped(this.tickCount);
@@ -103,14 +93,15 @@ public class Geardian extends HostilitiesEntity {
             }
         }
 
-        int animId = this.getAnimationId();
-        this.sweepAnimationState.animateWhen(animId == Geardian.ANIM_SWEEP, this.tickCount);
-        this.thrustAnimationState.animateWhen(animId == Geardian.ANIM_JAB, this.tickCount);
-        this.chargedSweepAnimationState.animateWhen(animId == Geardian.ANIM_CHARGED_SWEEP, this.tickCount);
-        this.slamAnimationState.animateWhen(animId == Geardian.ANIM_SLAM, this.tickCount);
-        this.heavythrustAnimationState.animateWhen(animId == Geardian.ANIM_HEAVY_THRUST, this.tickCount);
-        this.leftstepAnimationState.animateWhen(animId == Geardian.ANIM_LEFT_STEP, this.tickCount);
-        this.rightstepAnimationState.animateWhen(animId == Geardian.ANIM_RIGHT_STEP, this.tickCount);
+        this.bashAnimationState.animateWhen(animId == Daturena.ANIM_BASH, this.tickCount);
+        this.threePunchComboAnimationState.animateWhen(animId == Daturena.ANIM_THREE_PUNCH_COMBO, this.tickCount);
+        this.jabCrossAnimationState.animateWhen(animId == Daturena.ANIM_JAB_CROSS, this.tickCount);
+    }
+
+    public void stopActionAnimations() {
+        this.bashAnimationState.stop();
+        this.threePunchComboAnimationState.stop();
+        this.jabCrossAnimationState.stop();
     }
 
     // --- Prevent Vanilla Contact Damage Mid-Action ---
@@ -148,7 +139,7 @@ public class Geardian extends HostilitiesEntity {
 
     private void registerIdleActivities(Brain<HostilitiesEntity> brain) {
         brain.addActivity(Activity.IDLE, 10, ImmutableList.<BehaviorControl<? super HostilitiesEntity>>of(
-                StartAttacking.create(Geardian::findTarget),
+                StartAttacking.create(Daturena::findTarget),
                 followOwner(),
                 new RunOne<>(ImmutableList.of(
                         Pair.of(strollToStationPost(), 5),
@@ -162,14 +153,11 @@ public class Geardian extends HostilitiesEntity {
         brain.addActivityWithConditions(
                 Activity.FIGHT,
                 ImmutableList.of(
-                        Pair.of(0, StopAttackingIfTargetInvalid.create(Geardian::isTargetInvalid)),
+                        Pair.of(0, StopAttackingIfTargetInvalid.create(Daturena::isTargetInvalid)),
                         Pair.of(1, new RunOne<>(ImmutableList.of(
-                                Pair.of(new GeardianStepBehavior(), 15),          // Added Dodge Weight
-                                Pair.of(new GeardianSweepBehavior(), 4),
-                                Pair.of(new GeardianThrustBehavior(), 4),
-                                Pair.of(new GeardianSlamBehavior(), 3),
-                                Pair.of(new GeardianChargedSweepBehavior(), 3),
-                                Pair.of(new GeardianHeavyThrustBehavior(), 2)
+                                Pair.of(new DaturenaJabCrossBehavior(), 5),          // Quick opener/harass jab cross combo
+                                Pair.of(new DaturenaBashBehavior(), 4),              // Single heavy knockback bash
+                                Pair.of(new DaturenaThreePunchComboBehavior(), 3)    // Heavy 3-hit forward step combo
                         ))),
                         Pair.of(2, SetWalkTargetFromAttackTargetIfTargetOutOfReach.create(1.25F))
                 ),
@@ -195,15 +183,15 @@ public class Geardian extends HostilitiesEntity {
         return !target.isAlive();
     }
 
-    private static Optional<? extends LivingEntity> findTarget(HostilitiesEntity geardian) {
-        Optional<LivingEntity> hurtBy = geardian.getBrain().getMemory(MemoryModuleType.HURT_BY_ENTITY);
+    private static Optional<? extends LivingEntity> findTarget(HostilitiesEntity daturena) {
+        Optional<LivingEntity> hurtBy = daturena.getBrain().getMemory(MemoryModuleType.HURT_BY_ENTITY);
         if (hurtBy.isPresent() && hurtBy.get().isAlive()) {
             return hurtBy;
         }
 
-        Optional<NearestVisibleLivingEntities> visibleEntities = geardian.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES);
+        Optional<NearestVisibleLivingEntities> visibleEntities = daturena.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES);
         return visibleEntities.flatMap(nearestVisibleLivingEntities -> nearestVisibleLivingEntities.find(entity ->
-                entity instanceof Enemy && !geardian.isAlliedTo(entity)
+                entity instanceof Enemy && !daturena.isAlliedTo(entity)
         ).findFirst());
     }
 

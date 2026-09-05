@@ -7,6 +7,7 @@ import com.fernleaf.hostilities.server.entity.util.HostilitiesEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
@@ -18,13 +19,13 @@ public class GeardianChargedSweepBehavior extends TelegraphedAttackBehavior<Host
 
     private static class Attack implements TelegraphedAttack<HostilitiesEntity> {
         @Override
-        public int getWindupTicks() { return 34; }
+        public int getWindupTicks() { return 30; }   // 1.50s
 
         @Override
-        public int getActiveTicks() { return 3; }
+        public int getActiveTicks() { return 10; }   // 0.50s (1.50s - 2.00s)
 
         @Override
-        public int getRecoveryTicks() { return 45; }
+        public int getRecoveryTicks() { return 10; } // 0.50s (Total: 2.5s / 50 ticks)
 
         @Override
         public boolean canAttack(HostilitiesEntity owner, LivingEntity target) {
@@ -36,22 +37,27 @@ public class GeardianChargedSweepBehavior extends TelegraphedAttackBehavior<Host
         @Override
         public void onWindupStart(HostilitiesEntity geardian, LivingEntity target) {
             geardian.triggerAnimation(Geardian.ANIM_CHARGED_SWEEP, getTotalDuration());
-            lockPosition(geardian);
+            lockPositionAndRotation(geardian);
         }
 
         @Override
         public void onWindupTick(HostilitiesEntity geardian, LivingEntity target, int elapsedTicks) {
-            lockPosition(geardian);
-            geardian.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            lockPositionAndRotation(geardian);
         }
 
         @Override
         public void onExecute(HostilitiesEntity geardian, LivingEntity target, int activeTicksElapsed) {
-            lockPosition(geardian);
-            geardian.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            lockPositionAndRotation(geardian);
 
             if (activeTicksElapsed == 1) {
-                AABB sweepBox = geardian.getBoundingBox().inflate(3.0D, 1.0D, 3.0D);
+                Vec3 look = geardian.getLookAngle();
+                Vec3 center = geardian.position().add(look.scale(2.0D));
+
+                AABB sweepBox = new AABB(
+                        center.x - 1.5D, geardian.getY(), center.z - 1.5D,
+                        center.x + 1.5D, geardian.getY() + 2.0D, center.z + 1.5D
+                ).expandTowards(look.scale(2.0D));
+
                 List<LivingEntity> targets = geardian.level().getEntitiesOfClass(
                         LivingEntity.class, sweepBox, e -> e != geardian && !geardian.isAlliedTo(e)
                 );
@@ -59,22 +65,30 @@ public class GeardianChargedSweepBehavior extends TelegraphedAttackBehavior<Host
                 for (LivingEntity entity : targets) {
                     entity.hurt(geardian.damageSources().mobAttack(geardian), 18.0F);
                     entity.setDeltaMovement(entity.getDeltaMovement().add(
-                            geardian.getLookAngle().x * 1.8D, 0.2D, geardian.getLookAngle().z * 1.8D
+                            look.x * 1.8D, 0.2D, look.z * 1.8D
                     ));
                 }
             }
         }
 
         @Override
-        public void onRecoveryTick(HostilitiesEntity geardian, LivingEntity target, int recoveryTicksElapsed) {}
+        public void onRecoveryTick(HostilitiesEntity geardian, LivingEntity target, int recoveryTicksElapsed) {
+            lockPositionAndRotation(geardian);
+        }
 
         @Override
         public void onStop(HostilitiesEntity geardian, LivingEntity target) {}
 
-        private void lockPosition(HostilitiesEntity geardian) {
+        private void lockPositionAndRotation(HostilitiesEntity geardian) {
             geardian.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
             geardian.getNavigation().stop();
             geardian.setDeltaMovement(0.0D, geardian.getDeltaMovement().y, 0.0D);
+
+            geardian.setYRot(geardian.yRotO);
+            geardian.setXRot(geardian.xRotO);
+            geardian.yBodyRot = geardian.yBodyRotO;
+            geardian.yHeadRot = geardian.yHeadRotO;
+            geardian.getLookControl().setLookAt(geardian.getX() + geardian.getLookAngle().x, geardian.getEyeY(), geardian.getZ() + geardian.getLookAngle().z);
         }
     }
 }
